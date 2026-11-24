@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<!--
+    Gribouille RP - écran de chargement Garry's Mod
+    À héberger en ligne (GitHub Pages, ton site...) avec logo_g.png et le dossier fonts/,
+    puis dans cfg/server.cfg :  sv_loadingurl "https://ton-adresse/index.html"
+    Ouvert dans un navigateur normal, la page simule un chargement (pour la tester).
+    JavaScript "ancien" (ES5) exprès : la branche principale de GMod utilise un vieux navigateur.
+-->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Gribouille RP</title>
+<style>
+    @font-face { font-family: "GTitle";  src: url("fonts/gribouille_title.ttf"); }
+    @font-face { font-family: "GBold";   src: url("fonts/gribouille_bold.ttf"); }
+    @font-face { font-family: "GMedium"; src: url("fonts/gribouille_medium.ttf"); }
+
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+    body {
+        background-color: #FFF6E5;
+        /* petits points façon cahier */
+        background-image: radial-gradient(#E6DCC8 2px, transparent 2.5px);
+        background-size: 28px 28px;
+        font-family: "GMedium", sans-serif;
+        color: #1B1B1F;
+    }
+
+    /* gribouillis décoratifs dans les coins */
+    .doodle { position: absolute; border: 6px solid #1B1B1F; border-radius: 50%; opacity: .08; }
+    .d1 { width: 340px; height: 340px; left: -120px; top: -110px; }
+    .d2 { width: 260px; height: 260px; right: -80px; bottom: -90px; }
+    .d3 { width: 120px; height: 120px; right: 12%; top: 9%; border-color: #FF5D8F; opacity: .35; }
+    .d4 { width: 70px; height: 70px; left: 14%; bottom: 14%; border-color: #4CC9F0; opacity: .45; }
+
+    .center {
+        position: absolute; left: 50%; top: 50%;
+        width: 760px; margin-left: -380px; margin-top: -270px;
+        text-align: center;
+    }
+
+    /* logo autocollant penché qui flotte */
+    .logo {
+        display: inline-block; width: 150px; height: 150px;
+        background: #FFD23F; border: 6px solid #1B1B1F; border-radius: 40px;
+        box-shadow: 8px 8px 0 #1B1B1F;
+        -webkit-animation: float 3.2s ease-in-out infinite; animation: float 3.2s ease-in-out infinite;
+    }
+    .logo img { width: 124px; height: 124px; margin-top: 13px; }
+    @-webkit-keyframes float { 0%, 100% { -webkit-transform: rotate(-6deg) translateY(0); } 50% { -webkit-transform: rotate(-3deg) translateY(-10px); } }
+    @keyframes float { 0%, 100% { transform: rotate(-6deg) translateY(0); } 50% { transform: rotate(-3deg) translateY(-10px); } }
+
+    /* titre avec contour encre */
+    .title {
+        font-family: "GTitle", sans-serif; font-size: 78px; color: #FFFFFF; margin: 26px 0 0;
+        letter-spacing: 1px;
+        text-shadow: -5px -5px 0 #1B1B1F, 5px -5px 0 #1B1B1F, -5px 5px 0 #1B1B1F, 5px 5px 0 #1B1B1F,
+                     0 -5px 0 #1B1B1F, 0 5px 0 #1B1B1F, -5px 0 0 #1B1B1F, 5px 0 0 #1B1B1F, 9px 9px 0 #1B1B1F;
+    }
+    .title span { color: #FF5D8F; }
+
+    .tags { margin-top: 18px; }
+    .tag {
+        display: inline-block; font-family: "GBold", sans-serif; font-size: 17px;
+        padding: 5px 16px; margin: 0 5px; border: 3px solid #1B1B1F; border-radius: 14px;
+        background: #FFFFFF; box-shadow: 3px 3px 0 #1B1B1F;
+    }
+    .tag.blue { background: #4CC9F0; }
+    .tag.yellow { background: #FFD23F; }
+    .tag.tilt { -webkit-transform: rotate(-2deg); transform: rotate(-2deg); }
+
+    /* barre de chargement : crayon hachuré */
+    .bar {
+        position: relative; height: 34px; margin: 44px 30px 0;
+        background: #FFFFFF; border: 5px solid #1B1B1F; border-radius: 20px;
+        box-shadow: 6px 6px 0 #1B1B1F; overflow: hidden;
+    }
+    .fill {
+        position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+        background-color: #FFD23F;
+        background-image: -webkit-linear-gradient(135deg, rgba(255,255,255,.45) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.45) 50%, rgba(255,255,255,.45) 75%, transparent 75%, transparent);
+        background-image: linear-gradient(-45deg, rgba(255,255,255,.45) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.45) 50%, rgba(255,255,255,.45) 75%, transparent 75%, transparent);
+        background-size: 34px 34px;
+        border-right: 5px solid #1B1B1F;
+        -webkit-transition: width .5s ease; transition: width .5s ease;
+        -webkit-animation: stripes 1s linear infinite; animation: stripes 1s linear infinite;
+    }
+    @-webkit-keyframes stripes { from { background-position: 0 0; } to { background-position: 34px 0; } }
+    @keyframes stripes { from { background-position: 0 0; } to { background-position: 34px 0; } }
+
+    .status { margin-top: 16px; font-family: "GBold", sans-serif; font-size: 21px; }
+    .status .pct { color: #FF5D8F; }
+    .file { margin-top: 6px; font-size: 15px; color: #4A4A55; height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+    /* astuces qui tournent */
+    .tip {
+        position: absolute; left: 50%; bottom: 46px; width: 700px; margin-left: -350px;
+        background: #FFFFFF; border: 4px solid #1B1B1F; border-radius: 22px; box-shadow: 6px 6px 0 #1B1B1F;
+        padding: 16px 24px; box-sizing: border-box; text-align: left;
+        -webkit-transition: opacity .4s ease; transition: opacity .4s ease;
+    }
+    .tip .label {
+        display: inline-block; font-family: "GBold", sans-serif; font-size: 14px;
+        background: #1B1B1F; color: #FFD23F; padding: 3px 12px; border-radius: 10px; margin-right: 12px;
+        vertical-align: middle;
+    }
+    .tip .text { font-size: 18px; vertical-align: middle; }
+
+    .corner { position: absolute; right: 26px; top: 22px; font-family: "GBold", sans-serif; font-size: 16px; color: #4A4A55; }
+</style>
+</head>
+<body>
+    <div class="doodle d1"></div><div class="doodle d2"></div><div class="doodle d3"></div><div class="doodle d4"></div>
+    <div class="corner" id="corner"></div>
+
+    <div class="center">
+        <div class="logo"><img src="logo_g.png" alt=""></div>
+        <div class="title">Gribouille <span>RP</span></div>
+        <div class="tags">
+            <span class="tag yellow tilt" id="map">Chargement…</span>
+            <span class="tag blue" id="players"></span>
+        </div>
+        <div class="bar"><div class="fill" id="fill"></div></div>
+        <div class="status"><span id="status">Connexion au serveur…</span> · <span class="pct" id="pct">0 %</span></div>
+        <div class="file" id="file"></div>
+    </div>
+
+    <div class="tip" id="tip"><span class="label">ASTUCE</span><span class="text" id="tipText"></span></div>
+
+<script>
+    // ---------------- Réglages ----------------
+    var CONFIG = {
+        corner: "discord.gg/ton-invitation",     // texte en haut à droite ("" pour rien)
+        tipDelay: 6000,                          // ms entre deux astuces
+        tips: [
+            "F4 : choisis ton métier et achète des entités.",
+            "Ta carte d'identité se montre avec un clic gauche sur un joueur.",
+            "Pas de maire ? Présente-toi au PNJ Élections !",
+            "Pour changer de nom RP, va voir le PNJ « Changer de nom ».",
+            "TAB : la liste des joueurs. Clique sur un joueur pour son profil Steam.",
+            "Le maire fixe la taxe sur les salaires au PNJ Mairie.",
+            "Échap : le menu du serveur (Discord, règles, paramètres)."
+        ]
+    };
+
+    // traduction des messages de GMod
+    // [morceau du message GMod, texte affiché, % minimum] : du plus précis au plus général (le 1er qui correspond gagne)
+    var STATUS = [
+        ["starting lua", "Démarrage des scripts…", 85],
+        ["client info sent", "Infos envoyées !", 20],
+        ["sending client info", "Envoi de tes infos…", 15],
+        ["retrieving server info", "Récupération des infos du serveur…", 5],
+        ["parsing game info", "Lecture de la carte…", 90],
+        ["precaching", "Préchargement…", 92],
+        ["workshop", "Téléchargement du contenu Workshop…", 25],
+        ["mounting", "Préparation des addons…", 60],
+        ["downloading", "Téléchargement des fichiers…", 30],
+        ["lua", "Chargement des scripts…", 75],
+        ["loading", "Chargement…", 40]
+    ];
+
+    var total = 0, needed = 0, floor = 0, gotCall = false;
+
+    function $(id) { return document.getElementById(id); }
+    function setPct(p) {
+        p = Math.max(floor, Math.min(100, Math.round(p)));
+        floor = p;
+        $("fill").style.width = p + "%";
+        $("pct").innerHTML = p + " %";
+    }
+    function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+    // ---------------- Fonctions appelées par Garry's Mod ----------------
+    function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode) {
+        gotCall = true;
+        $("map").innerHTML = esc(mapname);
+        $("players").innerHTML = esc(maxplayers) + " places · " + esc(gamemode);
+    }
+    function SetFilesTotal(t) { gotCall = true; total = t; }
+    function SetFilesNeeded(n) {
+        gotCall = true; needed = n;
+        if (total > 0) setPct(30 + 50 * (total - needed) / total);   // les fichiers = de 30 à 80 %
+    }
+    function DownloadingFile(name) { gotCall = true; $("file").innerHTML = esc(name); }
+    function SetStatusChanged(status) {
+        gotCall = true;
+        var low = String(status).toLowerCase(), text = status, p = null;
+        for (var i = 0; i < STATUS.length; i++) {
+            if (low.indexOf(STATUS[i][0]) !== -1) { text = STATUS[i][1]; p = STATUS[i][2]; break; }
+        }
+        $("status").innerHTML = esc(text);
+        if (p !== null) setPct(p);
+    }
+
+    // ---------------- Astuces ----------------
+    var tipIndex = Math.floor(Math.random() * CONFIG.tips.length);
+    function nextTip() {
+        var tip = $("tip");
+        tip.style.opacity = 0;
+        setTimeout(function () {
+            tipIndex = (tipIndex + 1) % CONFIG.tips.length;
+            $("tipText").innerHTML = esc(CONFIG.tips[tipIndex]);
+            tip.style.opacity = 1;
+        }, 400);
+    }
+    $("tipText").innerHTML = esc(CONFIG.tips[tipIndex]);
+    setInterval(nextTip, CONFIG.tipDelay);
+    $("corner").innerHTML = esc(CONFIG.corner);
+
+    // ---------------- Hors de GMod : chargement simulé pour tester la page ----------------
+    setTimeout(function () {
+        if (gotCall) return;
+        GameDetails("Gribouille RP", "", "rp_downtown_v4c_v2", 64, "", "DarkRP");
+        var steps = ["Retrieving server info", "Sending client info", "Workshop", "Downloading", "Mounting", "Starting Lua", "Parsing game info"];
+        var i = 0;
+        SetFilesTotal(40);
+        var n = 40;
+        var t = setInterval(function () {
+            if (n > 0 && i >= 3) { n -= 4; SetFilesNeeded(n); DownloadingFile("materials/gribouille_lib/fichier_" + (40 - n) + ".png"); return; }
+            if (i < steps.length) { SetStatusChanged(steps[i]); i++; } else { setPct(100); clearInterval(t); }
+        }, 700);
+    }, 1500);
+</script>
+</body>
+</html>
